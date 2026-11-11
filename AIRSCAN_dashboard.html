@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirScan 2.4 | Monitor de espectro</title>
+<style>
+:root{--bg:#080d18;--panel:#101a2b;--panel2:#142238;--line:#243650;--text:#eaf2ff;--muted:#91a4bf;--cyan:#42d9e8;--green:#52e0a1;--purple:#a78bfa;--orange:#ffb86b;--red:#ff6b81}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#142b43 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.5 Inter,Segoe UI,Arial,sans-serif}
+.wrap{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:13px}.logo{width:46px;height:46px;border:1px solid #286078;border-radius:14px;display:grid;place-items:center;color:var(--cyan);font-size:24px;background:#102b3a;box-shadow:0 0 28px #42d9e822}.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:2px;font-weight:800}.brand h1{font-size:24px;margin:1px 0 0;letter-spacing:.3px}.brand p{margin:0;color:var(--muted);font-size:12px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#15243a;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}.btn:hover{border-color:var(--cyan);color:var(--cyan)}.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#06131b}.status{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid #285344;background:#10271f;border-radius:30px;color:var(--green);font-size:12px;font-weight:700}.dot{width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}.metric,.panel{background:linear-gradient(145deg,#132138,#0e1829);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px #0002}.metric{padding:17px 18px}.metric .label{color:var(--muted);font-size:12px}.metric strong{display:block;font-size:27px;margin:5px 0 1px;letter-spacing:-.7px}.metric small{color:var(--muted);font-size:11px}.cyan{color:var(--cyan)}.green{color:var(--green)}.purple{color:var(--purple)}.orange{color:var(--orange)}
+.grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px;margin-bottom:16px}.panel{padding:18px;min-width:0}.panelhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.panel h2{font-size:15px;margin:0 0 3px}.sub{font-size:11px;color:var(--muted)}.tag{font-size:10px;color:var(--cyan);border:1px solid #286078;padding:4px 8px;border-radius:20px;white-space:nowrap}
+.radarbox{height:365px;position:relative;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle,#10263a 0,#0c1929 68%,#0c1726 100%);border-radius:12px;border:1px solid #20374e}.radar{width:min(330px,78vw);aspect-ratio:1;border-radius:50%;position:relative;background:repeating-radial-gradient(circle,transparent 0 49px,#31506a 50px 51px,transparent 52px 82px),linear-gradient(90deg,transparent 49.7%,#31506a 50%,transparent 50.3%),linear-gradient(0deg,transparent 49.7%,#31506a 50%,transparent 50.3%);border:1px solid #31506a;box-shadow:0 0 35px #42d9e812}
+.radar:before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 300deg,#42d9e833 345deg,#42d9e800 360deg);animation:sweep 5s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.radar:after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:var(--cyan);transform:translate(-50%,-50%);box-shadow:0 0 15px var(--cyan)}
+.rlabel{position:absolute;color:#7590aa;font-size:10px}.rlabel.top{top:7px;left:50%;transform:translateX(-50%)}.rlabel.bottom{bottom:7px;left:50%;transform:translateX(-50%)}.rlabel.left{left:8px;top:50%;transform:translateY(-50%)}.rlabel.right{right:8px;top:50%;transform:translateY(-50%)}
+.blip{position:absolute;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #e8fbff;background:var(--green);box-shadow:0 0 0 5px #52e0a122,0 0 15px currentColor;z-index:2;cursor:pointer}.blip.weak{background:var(--orange);box-shadow:0 0 0 5px #ffb86b22,0 0 15px currentColor}.blip.mid{background:var(--cyan);box-shadow:0 0 0 5px #42d9e822,0 0 15px currentColor}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.swatch{width:8px;height:8px;border-radius:50%;display:inline-block}
+canvas{width:100%;height:300px;display:block}.chartwrap{height:300px;position:relative}.chartwrap.short{height:230px}.chartwrap.short canvas{height:230px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:520px}th,td{text-align:left;padding:11px 10px;border-bottom:1px solid #203149;font-size:12px}th{color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.8px}td{color:#dce8f7}.ssid{font-weight:700}.pill{padding:3px 7px;border-radius:20px;background:#1b3049;color:var(--cyan);font-size:10px}.signal{display:flex;align-items:center;gap:8px}.bar{width:65px;height:5px;background:#26384e;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--green));border-radius:8px}
+.bottomgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.upload{border:1px dashed #38516d;background:#0c1727;border-radius:12px;padding:14px;color:var(--muted);font-size:12px}.upload input{max-width:100%;margin-top:9px;color:var(--muted)}.note{color:var(--muted);font-size:11px;margin-top:10px}.foot{color:#6f829d;text-align:center;font-size:11px;padding:22px 0 4px}
+@media(max-width:900px){.grid,.bottomgrid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}}
+@media(max-width:520px){.wrap{padding:15px}.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:22px}.brand h1{font-size:20px}.radarbox{height:320px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">⌁</div><div><div class="eyebrow">RF MONITORING SYSTEM · 2.4 GHz</div><h1>AIRSCAN <span class="cyan">2.4</span></h1><p>Analizador inalámbrico · Raspberry Pi Pico 2 W + NRF24L01</p></div></div>
+ <div class="actions"><span class="status" id="connectionStatus"><i class="dot"></i> DEMO · SIN CONECTAR</span><button class="btn" id="connect">⟷ Conectar Pico</button><button class="btn" id="reset">↺ Restaurar demo</button><button class="btn primary" id="export">↓ Exportar CSV</button></div>
+</header>
+<section class="metrics">
+ <div class="metric"><div class="label">REDES WiFi DETECTADAS</div><strong class="cyan" id="mNetworks">7</strong><small>En el último escaneo</small></div>
+ <div class="metric"><div class="label">SEÑAL MÁS FUERTE</div><strong class="green" id="mStrong">−43 dBm</strong><small id="mStrongName">AndroidAPB433</small></div>
+ <div class="metric"><div class="label">CANAL CON MÁS ACTIVIDAD</div><strong class="purple" id="mChannel">CH 9</strong><small id="mActivity">127 detecciones RPD</small></div>
+ <div class="metric"><div class="label">BARRIDO DE FRECUENCIA</div><strong class="orange">2.4–2.48</strong><small>GHz · Canales NRF 0–80</small></div>
+</section>
+<div class="grid">
+ <section class="panel">
+  <div class="panelhead"><div><h2>Radar de redes inalámbricas</h2><div class="sub">Distribución visual por canal e intensidad de señal</div></div><span class="tag" id="radarTag">DEMO</span></div>
+  <div class="radarbox"><div class="radar" id="radar"><span class="rlabel top">−30 dBm</span><span class="rlabel bottom">−90 dBm</span><span class="rlabel left">CH 1</span><span class="rlabel right">CH 13</span></div></div>
+  <div class="legend"><span><i class="swatch" style="background:var(--green)"></i>Fuerte ≥ −55 dBm</span><span><i class="swatch" style="background:var(--cyan)"></i>Media −56 a −70 dBm</span><span><i class="swatch" style="background:var(--orange)"></i>Débil &lt; −70 dBm</span></div>
+ </section>
+ <section class="panel">
+  <div class="panelhead"><div><h2>Espectro WiFi · canales 1–13</h2><div class="sub">Actividad detectada por el módulo NRF24L01</div></div><span class="tag">RPD COUNTS</span></div>
+  <div class="chartwrap"><canvas id="spectrum"></canvas></div>
+  <div class="note">Los valores representan conteos RPD acumulados por canal, no niveles de potencia en dBm.</div>
+ </section>
+</div>
+<section class="panel" style="margin-bottom:16px">
+ <div class="panelhead"><div><h2>Redes detectadas</h2><div class="sub">SSID, canal e intensidad recibida reportada por el escaneo WiFi</div></div><span class="tag" id="networkCount">7 REDES</span></div>
+ <div class="tablewrap"><table><thead><tr><th>Red / SSID</th><th>Canal</th><th>RSSI</th><th>Nivel relativo</th><th>Estado</th></tr></thead><tbody id="networkRows"></tbody></table></div>
+</section>
+<div class="bottomgrid">
+ <section class="panel">
+  <div class="panelhead"><div><h2>Historial de intensidad</h2><div class="sub">Comparación temporal de redes WiFi (dBm)</div></div><span class="tag">RSSI</span></div>
+  <div class="chartwrap short"><canvas id="history"></canvas></div>
+ </section>
+ <section class="panel">
+  <div class="panelhead"><div><h2>Importar mediciones CSV</h2><div class="sub">Carga el archivo exportado desde tu experimento</div></div><span class="tag">DATA INPUT</span></div>
+  <div class="upload">Selecciona tu archivo .csv. La página actualizará las tablas y gráficas con los datos reconocidos.<br><input type="file" id="csvFile" accept=".csv,text/csv"></div>
+  <div class="note">Columnas reconocidas (se aceptan nombres equivalentes): <b>ssid/red/nombre</b>, <b>channel/canal</b>, <b>rssi/dbm</b>, <b>activity/actividad/hits</b> y <b>timestamp/tiempo</b>. Si el CSV contiene varias filas por instante, se mostrarán en el historial.</div>
+  <div class="note" id="csvStatus">Mostrando datos de demostración basados en la captura compartida.</div>
+ </section>
+</div>
+<div class="foot">AIRSCAN 2.4 · Proyecto académico de monitoreo del espectro · Pico 2 W + NRF24L01</div>
+</div>
+<script>
+const demoNetworks=[
+ {name:"AndroidAPB433",ch:1,rssi:-43},{name:"UMNG-PUB-CLL100",ch:6,rssi:-43},
+ {name:"UMNG-PRIV-CLL100",ch:6,rssi:-45},{name:"LABCOM",ch:6,rssi:-68},
+ {name:"Buggy_Telemetria",ch:3,rssi:-72},{name:"UMNG-PRIV-CLL100",ch:6,rssi:-82},
+ {name:"UMNG-PUB-CLL100",ch:6,rssi:-83}
+];
+const demoActivity=[94,86,86,92,94,98,92,106,127,128,128,102,59];
+const $=id=>document.getElementById(id);
+let networks=[...demoNetworks], activity=[...demoActivity], history=[];
+function strength(r){return Math.max(0,Math.min(100,(r+90)/60*100))}
+function render(){
+ $('mNetworks').textContent=networks.length;
+ const strongest=[...networks].sort((a,b)=>b.rssi-a.rssi)[0];
+ $('mStrong').textContent=strongest?strongest.rssi+' dBm':'—';
+ $('mStrongName').textContent=strongest?strongest.name:'Sin datos';
+ const max=Math.max(...activity),idx=activity.indexOf(max);
+ $('mChannel').textContent='CH '+(idx+1);$('mActivity').textContent=max+' detecciones RPD';
+ $('networkCount').textContent=networks.length+' REDES';
+ $('networkRows').innerHTML=networks.map(n=>{let s=strength(n.rssi),cls=n.rssi>=-55?'green':n.rssi>=-70?'cyan':'orange',label=n.rssi>=-55?'Fuerte':n.rssi>=-70?'Media':'Débil';return `<tr><td class="ssid">${esc(n.name)}</td><td><span class="pill">CH ${n.ch}</span></td><td class="${cls}">${n.rssi} dBm</td><td><div class="signal"><div class="bar"><i style="width:${s}%"></i></div><span>${Math.round(s)}%</span></div></td><td>${label}</td></tr>`}).join('');
+ renderRadar();drawSpectrum();drawHistory();
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderRadar(){
+ const r=$('radar');r.querySelectorAll('.blip').forEach(x=>x.remove());
+ networks.forEach((n,i)=>{const el=document.createElement('i');el.className='blip '+(n.rssi>=-55?'':n.rssi>=-70?'mid':'weak');const angle=((n.ch-1)/12)*Math.PI*1.5-Math.PI*.75+(i%3-1)*.12;const radius=45+(90-strength(n.rssi))*1.15;const x=50+Math.cos(angle)*Math.min(radius,145)/3.3;const y=50+Math.sin(angle)*Math.min(radius,145)/3.3;el.style.left=x+'%';el.style.top=y+'%';el.title=`${n.name} · canal ${n.ch} · ${n.rssi} dBm`;r.appendChild(el)});
+}
+function canvasSetup(id){const c=$(id),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=rect.width*dpr;c.height=rect.height*dpr;const ctx=c.getContext('2d');ctx.scale(dpr,dpr);return {ctx,w:rect.width,h:rect.height}}
+function drawSpectrum(){
+ const {ctx,w,h}=canvasSetup('spectrum'),left=38,right=12,top=15,bottom=30,pw=w-left-right,ph=h-top-bottom,max=Math.max(140,...activity)*1.12;
+ ctx.clearRect(0,0,w,h);ctx.font='10px Segoe UI';ctx.strokeStyle='#263b54';ctx.fillStyle='#91a4bf';ctx.lineWidth=1;
+ for(let i=0;i<=4;i++){let y=top+ph*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText(Math.round(max*(1-i/4)),4,y+3)}
+ activity.forEach((v,i)=>{let bw=pw/13*.62,x=left+(i+.5)*pw/13-bw/2,y=top+ph*(1-v/max);let g=ctx.createLinearGradient(0,y,0,top+ph);g.addColorStop(0,'#42d9e8');g.addColorStop(1,'#287e9d');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,bw,top+ph-y,4);ctx.fill();ctx.fillStyle='#a9bad0';ctx.textAlign='center';ctx.fillText(i+1,left+(i+.5)*pw/13,h-10)});ctx.textAlign='left';
+}
+function drawHistory(){
+ const {ctx,w,h}=canvasSetup('history'),left=42,right=12,top=15,bottom=28,pw=w-left-right,ph=h-top-bottom;ctx.clearRect(0,0,w,h);ctx.font='10px Segoe UI';ctx.strokeStyle='#263b54';ctx.fillStyle='#91a4bf';
+ for(let i=0;i<4;i++){let y=top+ph*i/3;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText((-40-i*20)+'',4,y+3)}
+ const series=history.length?history:[networks.slice(0,3).map(n=>n.rssi),networks.slice(0,3).map(n=>n.rssi),networks.slice(0,3).map(n=>n.rssi)];
+ const colors=['#42d9e8','#52e0a1','#a78bfa'];
+ series.slice(0,3).forEach((s,j)=>{if(!s.length)return;ctx.beginPath();s.forEach((v,i)=>{let x=left+(s.length===1?pw/2:i*pw/(s.length-1)),y=top+((-40-v)/60)*ph;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle=colors[j];ctx.lineWidth=2;ctx.stroke()});
+ for(let i=0;i<5;i++)ctx.fillText('T'+(i+1),left+i*pw/4-5,h-8);
+}
+function parseCSV(text){
+ const lines=text.trim().split(/\r?\n/);if(lines.length<2)throw Error('El CSV no contiene filas de datos.');
+ const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';
+ const parseLine=line=>{let out=[],cur='',q=false;for(let i=0;i<line.length;i++){let c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}else if(c===delim&&!q){out.push(cur.trim());cur=''}else cur+=c}out.push(cur.trim());return out};
+ const headers=parseLine(lines[0]).map(x=>x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+ const find=keys=>headers.findIndex(h=>keys.some(k=>h.includes(k)));
+ const si=find(['ssid','red','nombre','network']),ci=find(['channel','canal']),ri=find(['rssi','dbm','signal','senal']),ai=find(['activity','actividad','hits','detecciones']),ti=find(['timestamp','tiempo','time','fecha']);
+ if(si<0||ci<0||ri<0)throw Error('No reconocí las columnas de red, canal e intensidad (SSID, canal, RSSI).');
+ let rows=lines.slice(1).filter(x=>x.trim()).map(parseLine);
+ networks=rows.map(r=>({name:r[si]||'Red desconocida',ch:Number(r[ci]),rssi:Number(String(r[ri]).replace(',','.'))})).filter(n=>Number.isFinite(n.ch)&&Number.isFinite(n.rssi));
+ if(ai>=0){let a=Array(13).fill(0);rows.forEach(r=>{let ch=Number(r[ci]),v=Number(String(r[ai]).replace(',','.'));if(ch>=1&&ch<=13&&Number.isFinite(v))a[ch-1]+=v});if(a.some(x=>x))activity=a}
+ if(ti>=0){history=[];const groups={};rows.forEach(r=>{let k=r[ti];(groups[k]??=[]).push(Number(String(r[ri]).replace(',','.')))});history=Object.values(groups).slice(-30).map(a=>a.slice(0,3))}
+ $('csvStatus').textContent=`CSV cargado correctamente: ${networks.length} registros de redes.`;render();
+}
+$('csvFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{parseCSV(await f.text())}catch(err){$('csvStatus').textContent='No se pudo leer el archivo: '+err.message}});
+$('reset').onclick=()=>{networks=[...demoNetworks];activity=[...demoActivity];history=[];$('csvStatus').textContent='Mostrando datos de demostración basados en la captura compartida.';render()};
+$('export').onclick=()=>{let rows=[['ssid','channel','rssi_dbm'],...networks.map(n=>[n.name,n.ch,n.rssi])];let blob=new Blob([rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')],{type:'text/csv'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='airscan_redes.csv';a.click();URL.revokeObjectURL(a.href)};
+
+let serialPort=null, reader=null, keepReading=false, liveRows=[];
+async function connectPico(){
+ if(!('serial' in navigator)){alert('Web Serial no está disponible. Abre esta página en Chrome o Edge desde http://localhost.');return}
+ try{
+  serialPort=await navigator.serial.requestPort();
+  await serialPort.open({baudRate:115200});
+  $('connectionStatus').innerHTML='<i class="dot"></i> PICO CONECTADA';
+  $('connect').textContent='⟷ Desconectar';
+  $('radarTag').textContent='LIVE · USB';
+  keepReading=true;
+  const decoder=new TextDecoderStream();
+  serialPort.readable.pipeTo(decoder.writable).catch(()=>{});
+  reader=decoder.readable.getReader();
+  let buffer='';
+  while(keepReading){
+   const {value,done}=await reader.read();if(done)break;
+   buffer+=value;
+   let lines=buffer.split(/\r?\n/);buffer=lines.pop();
+   for(const line of lines){if(!line.trim())continue;try{const packet=JSON.parse(line);if(packet.type==='airscan')updateLive(packet)}catch(e){console.debug('Línea serial ignorada:',line)}}
+  }
+ }catch(err){
+  $('csvStatus').textContent='Conexión serial: '+err.message;
+  await disconnectPico();
+ }
+}
+async function disconnectPico(){
+ keepReading=false;
+ try{if(reader){await reader.cancel();reader.releaseLock();reader=null}}catch(e){}
+ try{if(serialPort){await serialPort.close();serialPort=null}}catch(e){}
+ $('connectionStatus').innerHTML='<i class="dot"></i> DEMO · SIN CONECTAR';
+ $('connect').textContent='⟷ Conectar Pico';$('radarTag').textContent='DEMO';
+}
+function updateLive(p){
+ if(Array.isArray(p.networks))networks=p.networks.map(n=>({name:n.ssid||n.name||'<oculta>',ch:Number(n.channel??n.ch),rssi:Number(n.rssi)})).filter(n=>Number.isFinite(n.ch)&&Number.isFinite(n.rssi));
+ if(Array.isArray(p.activity)&&p.activity.length===13)activity=p.activity.map(Number);
+ const vals=networks.slice(0,3).map(n=>n.rssi);history.push(vals);if(history.length>30)history.shift();
+ $('csvStatus').textContent='Recibiendo datos en tiempo real · '+(p.time_ms??'')+' ms · '+networks.length+' redes';
+ liveRows.push({networks:[...networks],activity:[...activity],time:p.time_ms??Date.now()});
+ if(liveRows.length>1000)liveRows.shift();
+ render();
+}
+$('connect').addEventListener('click',()=>serialPort?disconnectPico():connectPico());
+window.addEventListener('beforeunload',()=>{if(reader)reader.cancel()});
+window.addEventListener('resize',()=>{drawSpectrum();drawHistory()});render();
+
+</script>
+</body></html>
